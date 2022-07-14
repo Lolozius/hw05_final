@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .forms import PostForm
+from .forms import PostForm, CommentForm
 from .models import Group, Post
 from .utils import func_paginator
 
@@ -70,6 +70,18 @@ def post_create(request):
     post.save()
     return redirect('posts:profile', post.author)
 
+@login_required
+def add_comment(request, username, post_id):
+    post = get_object_or_404(Post, id=post_id, author__username=username)
+    form = CommentForm(request.POST or None)
+    if form.is_valid():
+        comment = form.save(commit=False)
+        comment.author = request.user
+        comment.post = post
+        comment.save()
+        return redirect('post', username, post_id)
+    return render(request, 'includes/comments.html', {'form': form,
+                  'post': post})
 
 @login_required
 def post_edit(request, post_id):

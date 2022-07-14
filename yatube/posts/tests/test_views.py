@@ -6,7 +6,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from ..models import Group, Post
@@ -17,13 +17,20 @@ TEMP_DUMB_FIRST_PAGE = settings.POSTS_LIMIT
 OPTIONAL_PAGE_RANGE = TEMP_DUMB_FIRST_PAGE + 3
 TEMP_DUMB_SECOND_PAGE = OPTIONAL_PAGE_RANGE - TEMP_DUMB_FIRST_PAGE
 
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
+
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostTests(TestCase):
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
         small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
             b'\x01\x00\x80\x00\x00\x00\x00\x00'
@@ -60,10 +67,6 @@ class PostTests(TestCase):
                 slug='test_slug2')
         )
 
-    @classmethod
-    def tearDownClass(cls):
-        shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
-        super().tearDownClass()
 
     def setUp(self):
         self.guest_client = Client()
@@ -109,7 +112,7 @@ class PostTests(TestCase):
             with self.subTest(template=template):
                 response = self.authorized_client.get(template)
                 self.assertEqual(response.status_code, HTTPStatus.FOUND)
-
+############
     def test_index_pages_show_correct_context(self):
         """Шаблон index сформирован с правильным контекстом."""
         response = self.authorized_client.get(reverse('posts:index'))
@@ -159,7 +162,7 @@ class PostTests(TestCase):
         self.assertEqual(post_author, post.author)
         self.assertEqual(post_group, post.group)
         self.assertEqual(post_image, post.image)
-
+        #############
 
     def assert_post_response(self, response):
         """Шаблон сформирован с правильным контекстом."""
