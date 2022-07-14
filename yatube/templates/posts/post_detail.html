@@ -1,4 +1,4 @@
-{% extends 'base.html' %}}
+{% extends 'base.html' %}
 {% block title %}
   Пост {{ posted|truncatechars:30 }}
 {% endblock title %}
@@ -31,6 +31,7 @@
       </ul>
     </aside>
     <article class="col-12 col-md-9">
+      {% include 'includes/image_object.html' %}
       <p>
         {{ posted.text|linebreaks }}
       </p>

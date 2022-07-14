@@ -1,5 +1,8 @@
+import shutil
+import tempfile
 from http import HTTPStatus
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -16,15 +19,31 @@ TEMP_DUMB_SECOND_PAGE = OPTIONAL_PAGE_RANGE - TEMP_DUMB_FIRST_PAGE
 
 
 class PostTests(TestCase):
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
+        small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x02\x00'
+            b'\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+            b'\x0A\x00\x3B'
+        )
+        uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=small_gif,
+            content_type='image/gif'
+        )
 
         cls.post = Post.objects.create(
             author=User.objects.create_user(username='test_name1',
                                             email='test1@gmail.ru',
-                                            password='test_pass', ),
+                                            password='test_pass'),
             text='Тестовая запись для создания 1 поста',
+            image=uploaded,
             group=Group.objects.create(
                 title='Заголовок для 1 тестовой группы',
                 slug='test_slug1')
@@ -35,10 +54,16 @@ class PostTests(TestCase):
                                             email='test2@gmail.ru',
                                             password='test_pass', ),
             text='Тестовая запись для создания 2 поста',
+            image=uploaded,
             group=Group.objects.create(
                 title='Заголовок для 2 тестовой группы',
                 slug='test_slug2')
         )
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
+        super().tearDownClass()
 
     def setUp(self):
         self.guest_client = Client()
@@ -93,24 +118,48 @@ class PostTests(TestCase):
         post_text = first_object.text
         post_author = first_object.author
         post_group = first_object.group
+        post_image = Post.objects.first().image
         self.assertEqual(post_text, post.text)
         self.assertEqual(post_author, post.author)
         self.assertEqual(post_group, post.group)
+        self.assertEqual(post_image, post.image)
 
     def test_group_pages_show_correct_context(self):
         """Шаблон group_list сформирован с правильным контекстом"""
         response = self.authorized_client.get(
             reverse('posts:group_list',
-                    kwargs={'slug': 'test_slug2'}))
+                    kwargs={'slug': 'test_slug2'}
+                    )
+        )
         first_object = response.context['group']
         second_object = response.context['page_obj'][OBJ_PAGE]
         post = PostTests.post
         obj_title = second_object.text
         group_title = first_object
         group_slug = first_object.slug
+        post_image = Post.objects.first().image
         self.assertEqual(group_title, post.group)
         self.assertEqual(group_slug, post.group.slug)
         self.assertEqual(obj_title, post.text)
+        self.assertEqual(post_image, post.image)
+
+    def test_post_detail_correct_context(self):
+        response = self.authorized_client.get(
+            reverse('posts:post_detail',
+                    kwargs={'post_id': self.post.id}
+                    )
+        )
+        first_object = response.context['posted']
+        post = PostTests.post
+        post_text = first_object.text
+        post_author = first_object.author
+        post_group = first_object.group
+        post_image = Post.objects.first().image
+        self.assertEqual(post_text, post.text)
+        self.assertEqual(post_author, post.author)
+        self.assertEqual(post_group, post.group)
+        self.assertEqual(post_image, post.image)
+
 
     def assert_post_response(self, response):
         """Шаблон сформирован с правильным контекстом."""
@@ -155,9 +204,11 @@ class PostTests(TestCase):
         users_username = second_object
         post_text = first_object.text
         post_group = first_object.group
+        post_image = Post.objects.first().image
         self.assertEqual(users_username, user)
         self.assertEqual(post_text, post.text)
         self.assertEqual(post_group, post.group)
+        self.assertEqual(post_image, post.image)
 
     def test_post_another_group(self):
         """Пост не попал в другую группу"""
