@@ -50,11 +50,28 @@ def profile(request, username):
 
 def post_detail(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
+    author = post.author
+    form = CommentForm(request.POST or None)
     context = {
-
         'posted': post,
+        'form': form,
+        'author': author
     }
     return render(request, 'posts/post_detail.html', context)
+
+
+@login_required
+def add_comment(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    form = CommentForm(request.POST or None)
+    if form.is_valid():
+        comment = form.save(commit=False)
+        comment.author = request.user
+        comment.post = post
+        comment.save()
+        return redirect('post', post_id)
+    return render(request, 'includes/comments.html', {'form': form,
+                  'post': post})
 
 
 @login_required
@@ -70,18 +87,6 @@ def post_create(request):
     post.save()
     return redirect('posts:profile', post.author)
 
-@login_required
-def add_comment(request, username, post_id):
-    post = get_object_or_404(Post, id=post_id, author__username=username)
-    form = CommentForm(request.POST or None)
-    if form.is_valid():
-        comment = form.save(commit=False)
-        comment.author = request.user
-        comment.post = post
-        comment.save()
-        return redirect('post', username, post_id)
-    return render(request, 'includes/comments.html', {'form': form,
-                  'post': post})
 
 @login_required
 def post_edit(request, post_id):
