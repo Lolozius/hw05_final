@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}
+  Пост {{ posted|truncatechars:30 }}
+{% endblock title %}
+{% block content %}
+  <div class="row">
+    <aside class="col-12 col-md-3">
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">
+          Дата публикации: {{ posted.pub_date|date:"d M Y" }}
+        </li>
+        {% if posted.group %}
+          <li class="list-group-item">
+            Группа: {{ posted.group }}
+            <a href="{% url 'posts:group_list' posted.group.slug %}">
+              все записи группы
+            </a>
+          </li>
+        {% endif %}
+        <li class="list-group-item">
+          Автор: {{ posted.author }}
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          Всего постов автора:  <span>{{ posted.author.posts.count }}</span>
+        </li>
+        <li class="list-group-item">
+          <a href='{% url 'posts:profile' posted.author %}'>
+            все посты пользователя
+          </a>
+        </li>
+      </ul>
+    </aside>
+    <article class="col-12 col-md-9">
+      {% include 'includes/image_object.html' %}
+      <p>
+        {{ posted.text|linebreaks }}
+      </p>
+      {% if request.user == posted.author %}
+        <a class="btn btn-primary" href='{% url 'posts:post_edit' posted.pk %}'>
+          редактировать запись
+        </a>
+        <a class="btn btn-primary" href='{% url 'posts:post_delete' posted.pk %}'>
+          Удалить запись
+        </a>
+      {% endif %}
+    </article>
+  </div>
+{% endblock content %}
