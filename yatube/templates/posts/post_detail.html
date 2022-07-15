@@ -34,7 +34,6 @@
       {% include 'includes/image_object.html' %}
       <p>
         {{ posted.text|linebreaks }}
-        {% include 'includes/coments_page.html' %}
       </p>
       {% if request.user == posted.author %}
         <a class="btn btn-primary" href='{% url 'posts:post_edit' posted.pk %}'>
@@ -44,6 +43,7 @@
           Удалить запись
         </a>
       {% endif %}
+      {% include 'includes/coments_page.html' %}
     </article>
   </div>
 {% endblock content %}

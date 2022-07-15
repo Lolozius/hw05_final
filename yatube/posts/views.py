@@ -52,10 +52,12 @@ def post_detail(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
     author = post.author
     form = CommentForm(request.POST or None)
+    comments = post.comments.all()
     context = {
         'posted': post,
         'form': form,
-        'author': author
+        'author': author,
+        'comments': comments,
     }
     return render(request, 'posts/post_detail.html', context)
 
@@ -69,9 +71,7 @@ def add_comment(request, post_id):
         comment.author = request.user
         comment.post = post
         comment.save()
-        return redirect('post', post_id)
-    return render(request, 'includes/comments.html', {'form': form,
-                  'post': post})
+    return redirect('posts:post_detail', post_id=post_id)
 
 
 @login_required
