@@ -71,6 +71,7 @@ def add_comment(request, post_id):
         comment.author = request.user
         comment.post = post
         comment.save()
+        return render(request, 'include/coments_page.html', {'form': form, 'post': post})
     return redirect('posts:post_detail', post_id=post_id)
 
 

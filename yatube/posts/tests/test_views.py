@@ -1,3 +1,4 @@
+import datetime
 import shutil
 import tempfile
 from http import HTTPStatus
@@ -9,7 +10,7 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from ..models import Group, Post
+from ..models import Group, Post, Comment
 
 User = get_user_model()
 OBJ_PAGE = 0
@@ -22,7 +23,6 @@ TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostTests(TestCase):
-
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
@@ -66,7 +66,12 @@ class PostTests(TestCase):
                 title='Заголовок для 2 тестовой группы',
                 slug='test_slug2')
         )
-
+        cls.comment = Comment.objects.create(
+            text='test_coment',
+            author=cls.post.author,
+            post=cls.post,
+            created=datetime.datetime.now()
+        )
 
     def setUp(self):
         self.guest_client = Client()
@@ -94,7 +99,7 @@ class PostTests(TestCase):
                 kwargs={'post_id': self.post.id}): 'posts/create_post.html',
             reverse(
                 'posts:profile',
-                kwargs={'username': 'test_name1'}): 'posts/profile.html'
+                kwargs={'username': 'test_name1'}): 'posts/profile.html',
         }
         for reverse_name, template in templates_page_names.items():
             with self.subTest(template=template):
@@ -225,6 +230,14 @@ class PostTests(TestCase):
         )
         first_object = response.context['page_obj'][OBJ_PAGE]
         self.assertNotIn(post.text, first_object.text)
+
+    def test_post_comments(self):
+        """После успешной отправки комментарий появляется на странице поста"""
+        response = self.authorized_client.get(reverse(
+            'posts:post_detail',
+            kwargs={'post_id': self.post.id}))
+        first_object = response.context['comments'][OBJ_PAGE]
+        self.assertTrue(first_object.text)
 
 
 class PaginatorViewsTest(TestCase):

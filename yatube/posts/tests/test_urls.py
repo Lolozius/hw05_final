@@ -5,8 +5,7 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from ..models import Group, Post
-
+from ..models import Group, Post, Comment
 User = get_user_model()
 
 
@@ -28,6 +27,7 @@ class TaskURLTests(TestCase):
             slug='test_slug'
         )
 
+
     def setUp(self):
         # Создаем неавторизованный клиент
         self.guest_client = Client()
@@ -45,7 +45,7 @@ class TaskURLTests(TestCase):
             reverse('posts:index'),
             reverse('posts:group_list', kwargs={'slug': 'test_slug'}),
             reverse('posts:profile', kwargs={'username': 'test_name1'}),
-            reverse('posts:post_detail', kwargs={'post_id': self.post.pk}),
+            reverse('posts:post_detail', kwargs={'post_id': self.post.id}),
         )
         for adress in url_names:
             with self.subTest(adress=adress):
@@ -62,6 +62,18 @@ class TaskURLTests(TestCase):
             with self.subTest(adress=adress):
                 response = self.authorized_client_not_author.get(adress)
                 self.assertEqual(response.status_code, HTTPStatus.FOUND)
+
+    def test_for_comments_authorized_user(self):
+        """
+        Коментарии доступны только авторизированному
+        пользователю
+        """
+        urls_names = (reverse(
+            'posts:add_comment',
+            kwargs={'post_id': self.post.id})
+        )
+        response = self.authorized_client_not_author.get(urls_names)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_for_authorized_user(self):
         """

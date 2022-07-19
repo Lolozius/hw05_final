@@ -1,3 +1,4 @@
+import datetime
 import shutil
 import tempfile
 
@@ -7,7 +8,7 @@ from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
 
-from ..models import Group, Post
+from ..models import Group, Post, Comment
 
 User = get_user_model()
 
@@ -16,6 +17,10 @@ TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostFormTests(TestCase):
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     @classmethod
     def setUpClass(cls):
@@ -47,15 +52,20 @@ class PostFormTests(TestCase):
             group=cls.group,
             image=uploaded,
         )
+        cls.comment = Comment.objects.create(
+            text='test comet',
+            author=cls.user,
+            post=cls.post,
+            created=datetime.datetime.now()
+        )
 
     def setUp(self):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+    def test_comment_posts_form(self):
+        pass
+
 
     def test_create_post_form(self):
         """При отправке валидной формы создаётся новая запись в бд"""
