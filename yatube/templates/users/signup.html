@@ -8,7 +8,7 @@
         <div class="card-header">Зарегистрироваться</div>
         <div class="card-body">
           {% load user_filters %} {# Загружаем фильтры #}
-          <form method="post" action="{% url "users:login" %}">
+          <form method="post" action="{% url "users:signup" %}">
             {% csrf_token %}
             {% include 'includes/form_line.html' %}
             <div class="col-md-6 offset-md-4">
