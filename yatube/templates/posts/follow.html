@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Подписки {{ request.user.username }}{% endblock %}
+{% block header %}Подписки {{ request.user.username }}{% endblock %}
+{% block content %}
+<div class="container">
+  {% include "includes/switcher.html" with follow=True %}
+  <div class="flex-column">
+    <h3>Подписки {{request.user.username}}</h3>
+  </div>
+  {% for post in page_obj%}
+  {% include 'includes/post_lineboard.html' %}
+  {% endfor %}
+  {% include "includes/paginator.html" %}
+</div>
+{% endblock %}

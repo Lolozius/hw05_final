@@ -1,9 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from .forms import PostForm, CommentForm
-from .models import Group, Post
+from .models import Group, Post, Follow
 from .utils import func_paginator
 
 User = get_user_model()
@@ -39,10 +40,18 @@ def profile(request, username):
     users = get_object_or_404(User, username=username)
     posts = users.posts.all()
     page_obj = func_paginator(request, posts)
+    folow_count = Follow.objects.all().count
+    following = False
+    if request.user.is_authenticated:
+        following = Follow.objects.filter(
+            user=request.user,
+            author__username=username).exists()
 
     context = {
         'users': users,
-        'page_obj': page_obj
+        'page_obj': page_obj,
+        'following': following,
+        'folow_count': folow_count,
 
     }
     return render(request, 'posts/profile.html', context)
@@ -120,3 +129,26 @@ def post_delete(request, post_id):
         return redirect('posts:post_detail', post.pk)
     post.delete()
     return redirect('posts:profile', post.author)
+
+
+@login_required
+def follow_index(request):
+    list_of_posts = Post.objects.filter(author__following__user=request.user)
+    page_obj = func_paginator(request, list_of_posts)
+    return render(request, 'posts/follow.html', {'page_obj': page_obj})
+
+
+@login_required
+def profile_follow(request, username):
+    user = get_object_or_404(User, username=username)
+    if request.user == user:
+        return redirect('posts:follow_index')
+    Follow.objects.get_or_create(user=request.user,
+                                 author=user)
+    return redirect('posts:follow_index')
+
+
+@login_required
+def profile_unfollow(request, username):
+    request.user.follower.get(author__username=username).delete()
+    return redirect('posts:follow_index')

@@ -4,7 +4,8 @@
   Последние обновления на сайте
 {% endblock title %}
 {% block content %}
-  <div class='container py-5'>
+  <div class='container'>
+    {% include 'includes/switcher.html' %}
     {% cache 20 index_page with page %}
       <h1>Последние обновления на сайте</h1>
       {% for post in page_obj %}
