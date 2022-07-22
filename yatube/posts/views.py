@@ -3,8 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
-from .forms import PostForm, CommentForm
-from .models import Group, Post, Follow
+from .forms import CommentForm, PostForm
+from .models import Follow, Group, Post
 from .utils import func_paginator
 
 User = get_user_model()
