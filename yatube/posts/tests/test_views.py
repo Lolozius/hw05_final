@@ -13,6 +13,7 @@ from django.urls import reverse
 
 from ..models import Comment, Follow, Group, Post
 
+
 User = get_user_model()
 OBJ_PAGE = 0
 TEMP_DUMB_FIRST_PAGE = settings.POSTS_LIMIT
@@ -74,6 +75,8 @@ class PostTests(TestCase):
             created=datetime.datetime.now()
         )
 
+        cls.output_data = PostTests.post
+
     def setUp(self):
         self.guest_client = Client()
         self.user = User.objects.get(username='test_name2')
@@ -123,15 +126,14 @@ class PostTests(TestCase):
         """Шаблон index сформирован с правильным контекстом."""
         response = self.authorized_client.get(reverse('posts:index'))
         first_object = response.context['page_obj'][OBJ_PAGE]
-        post = PostTests.post
         post_text = first_object.text
         post_author = first_object.author
         post_group = first_object.group
         post_image = Post.objects.first().image
-        self.assertEqual(post_text, post.text)
-        self.assertEqual(post_author, post.author)
-        self.assertEqual(post_group, post.group)
-        self.assertEqual(post_image, post.image)
+        self.assertEqual(post_text, self.output_data.text)
+        self.assertEqual(post_author, self.output_data.author)
+        self.assertEqual(post_group, self.output_data.group)
+        self.assertEqual(post_image, self.output_data.image)
 
     def test_group_pages_show_correct_context(self):
         """Шаблон group_list сформирован с правильным контекстом"""
@@ -142,15 +144,14 @@ class PostTests(TestCase):
         )
         first_object = response.context['group']
         second_object = response.context['page_obj'][OBJ_PAGE]
-        post = PostTests.post
         obj_title = second_object.text
         group_title = first_object
         group_slug = first_object.slug
         post_image = Post.objects.first().image
-        self.assertEqual(group_title, post.group)
-        self.assertEqual(group_slug, post.group.slug)
-        self.assertEqual(obj_title, post.text)
-        self.assertEqual(post_image, post.image)
+        self.assertEqual(group_title, self.output_data.group)
+        self.assertEqual(group_slug, self.output_data.group.slug)
+        self.assertEqual(obj_title, self.output_data.text)
+        self.assertEqual(post_image, self.output_data.image)
 
     def test_post_detail_correct_context(self):
         response = self.authorized_client.get(
