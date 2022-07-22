@@ -11,7 +11,7 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from ..models import Group, Post, Comment
+from ..models import Group, Post, Comment, Follow
 
 User = get_user_model()
 OBJ_PAGE = 0
@@ -19,15 +19,15 @@ TEMP_DUMB_FIRST_PAGE = settings.POSTS_LIMIT
 OPTIONAL_PAGE_RANGE = TEMP_DUMB_FIRST_PAGE + 3
 TEMP_DUMB_SECOND_PAGE = OPTIONAL_PAGE_RANGE - TEMP_DUMB_FIRST_PAGE
 
-TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
+MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 
-@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
+@override_settings(MEDIA_ROOT=MEDIA_ROOT)
 class PostTests(TestCase):
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
-        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+        shutil.rmtree(MEDIA_ROOT, ignore_errors=True)
 
     @classmethod
     def setUpClass(cls):
@@ -118,7 +118,7 @@ class PostTests(TestCase):
             with self.subTest(template=template):
                 response = self.authorized_client.get(template)
                 self.assertEqual(response.status_code, HTTPStatus.FOUND)
-############
+
     def test_index_pages_show_correct_context(self):
         """Шаблон index сформирован с правильным контекстом."""
         response = self.authorized_client.get(reverse('posts:index'))
@@ -168,7 +168,6 @@ class PostTests(TestCase):
         self.assertEqual(post_author, post.author)
         self.assertEqual(post_group, post.group)
         self.assertEqual(post_image, post.image)
-        #############
 
     def assert_post_response(self, response):
         """Шаблон сформирован с правильным контекстом."""
@@ -316,11 +315,68 @@ class CacheTests(TestCase):
     def test_cache_index(self):
         """Тест кэширования страницы index.html"""
         first_state = self.authorized_client.get(reverse('posts:index'))
-        post_1 = Post.objects.get(pk=1)
-        post_1.text = 'Измененный текст'
-        post_1.save()
+        post = Post.objects.get(pk=1)
+        post.text = 'Измененный текст'
+        post.save()
         second_state = self.authorized_client.get(reverse('posts:index'))
         self.assertEqual(first_state.content, second_state.content)
         cache.clear()
         third_state = self.authorized_client.get(reverse('posts:index'))
         self.assertNotEqual(first_state.content, third_state.content)
+
+
+class FollowTests(TestCase):
+    def setUp(self):
+        self.user_follower = User.objects.create_user(
+            username='follower',
+            email='test_11@mail.ru',
+            password='test_pass'
+        )
+        self.user_following = User.objects.create_user(
+            username='following',
+            email='test22@mail.ru',
+            password='test_pass'
+        )
+        self.post = Post.objects.create(
+            author=self.user_following,
+            text='Тестовая запись для тестирования ленты'
+        )
+        self.client_auth_follower = Client()
+        self.client_auth_follower.force_login(self.user_follower)
+
+        self.client_auth_following = Client()
+        self.client_auth_following.force_login(self.user_following)
+
+    def test_follow(self):
+        self.client_auth_follower.get(reverse(
+            'posts:profile_follow',
+            kwargs={'username':self.user_following.username})
+        )
+        self.assertEqual(Follow.objects.all().count(), 1)
+
+    def test_unfollow(self):
+        self.client_auth_follower.get(reverse(
+            'posts:profile_follow',
+            kwargs={'username': self.user_following.username})
+        )
+        self.client_auth_follower.get(reverse(
+            'posts:profile_unfollow',
+            kwargs={'username': self.user_following.username})
+        )
+        self.assertEqual(Follow.objects.all().count(), OBJ_PAGE)
+
+    def test_subscription_feed(self):
+        """запись появляется в ленте подписчиков"""
+        Follow.objects.create(user=self.user_follower,
+                              author=self.user_following)
+        response = self.client_auth_follower.get('/follow/')
+        post_text = response.context["page_obj"][OBJ_PAGE].text
+        self.assertEqual(
+            post_text,
+            'Тестовая запись для тестирования ленты'
+        )
+        response = self.client_auth_following.get('/follow/')
+        self.assertNotContains(
+            response,
+            'Тестовая запись для тестирования ленты'
+        )

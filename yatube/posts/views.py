@@ -40,12 +40,15 @@ def profile(request, username):
     users = get_object_or_404(User, username=username)
     posts = users.posts.all()
     page_obj = func_paginator(request, posts)
-    follow_count = Follow.objects.filter(user=request.user, author__username=username).count
+    follow_count: int = 0
     following = False
     if request.user.is_authenticated:
         following = Follow.objects.filter(
             user=request.user,
             author__username=username).exists()
+        follow_count = Follow.objects.filter(
+            user=request.user,
+            author__username=username).count
 
     context = {
         'users': users,
@@ -123,7 +126,7 @@ def post_edit(request, post_id):
         'post_edit_flag': True})
 
 
-@login_required
+
 def post_delete(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     if request.user != post.author:
