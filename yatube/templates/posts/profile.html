@@ -6,7 +6,7 @@
   <div class="container py-5">
     <h1>Все посты пользователя {{ users }} </h1>
     <h3>Всего постов: {{ page_obj.paginator.count }} </h3>
-    <h3>Колличество подписчиков: {{ folow_count }} </h3>
+    <h3>Колличество подписчиков: {{ follow_count }} </h3>
     {% include 'includes/Subscribe.html' %}
     {% for post in page_obj %}
       <article>

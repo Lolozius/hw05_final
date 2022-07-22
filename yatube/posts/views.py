@@ -40,7 +40,7 @@ def profile(request, username):
     users = get_object_or_404(User, username=username)
     posts = users.posts.all()
     page_obj = func_paginator(request, posts)
-    folow_count = Follow.objects.all().count
+    follow_count = Follow.objects.filter(user=request.user, author__username=username).count
     following = False
     if request.user.is_authenticated:
         following = Follow.objects.filter(
@@ -51,7 +51,7 @@ def profile(request, username):
         'users': users,
         'page_obj': page_obj,
         'following': following,
-        'folow_count': folow_count,
+        'follow_count': follow_count,
 
     }
     return render(request, 'posts/profile.html', context)
@@ -123,6 +123,7 @@ def post_edit(request, post_id):
         'post_edit_flag': True})
 
 
+@login_required
 def post_delete(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     if request.user != post.author:
