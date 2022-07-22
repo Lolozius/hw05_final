@@ -28,7 +28,6 @@ class TaskURLTests(TestCase):
             slug='test_slug'
         )
 
-
     def setUp(self):
         # Создаем неавторизованный клиент
         self.guest_client = Client()

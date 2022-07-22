@@ -63,10 +63,6 @@ class PostFormTests(TestCase):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
-    def test_comment_posts_form(self):
-        pass
-
-
     def test_create_post_form(self):
         """При отправке валидной формы создаётся новая запись в бд"""
 
@@ -90,7 +86,6 @@ class PostFormTests(TestCase):
         self.assertEqual(self.group, last_post.group)
         self.assertEqual(form_data['image'], self.post.image)
 
-
     def test_post_edit_form(self):
         """Происходит изменение поста post_id в базе данных."""
         form_data = {
@@ -102,8 +97,7 @@ class PostFormTests(TestCase):
         self.authorized_client.post(
             reverse(
                 'posts:post_edit',
-                kwargs={
-                    'post_id': self.post.id}
+                kwargs={'post_id': self.post.id}
             ),
             data=form_data,
             follow=True
