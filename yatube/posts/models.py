@@ -21,6 +21,8 @@ class Post(models.Model):
     image = models.ImageField(
         'Картинка',
         upload_to='posts/',
+        blank=True,
+        null=True,
     )
     pub_date = models.DateTimeField(
         verbose_name='Дата публикации',
