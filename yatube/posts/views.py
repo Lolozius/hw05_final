@@ -23,10 +23,7 @@ def index(request):
 
 def group_posts(request, slug):
     group = get_object_or_404(Group, slug=slug)
-    posts = (
-        Post.objects.filter(group=group)
-        .all()
-    )
+    posts = group.posts.filter(group=group)
     page_obj = func_paginator(request, posts)
     context = {
         'group': group,
@@ -40,12 +37,12 @@ def profile(request, username):
     posts = users.posts.all()
     page_obj = func_paginator(request, posts)
     follow_count: int = 0
-    following = False
+    #following = False
     if request.user.is_authenticated:
-        following = Follow.objects.filter(
+        following = users.follower.filter(
             user=request.user,
             author__username=username).exists()
-        follow_count = Follow.objects.filter(
+        follow_count = users.follower.filter(
             user=request.user,
             author__username=username).count
 
