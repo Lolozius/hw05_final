@@ -65,7 +65,6 @@ class PostFormTests(TestCase):
 
     def test_create_post_form(self):
         """При отправке валидной формы создаётся новая запись в бд"""
-
         posts_count = Post.objects.count()
         form_data = {
             'text': self.post.text,
@@ -84,14 +83,14 @@ class PostFormTests(TestCase):
         self.assertEqual(last_post.id, self.post.id + 1)
         self.assertEqual(last_post.author, self.post.author)
         self.assertEqual(self.group, last_post.group)
-        self.assertEqual(form_data['image'], self.post.image)
+        self.assertTrue(form_data['image'])
 
     def test_post_edit_form(self):
         """Происходит изменение поста post_id в базе данных."""
         form_data = {
             'text': 'Изменение прошло успешно',
             'group': self.group.id,
-            'image': self.post.image
+            'image': self.post.image,
         }
         posts_count = Post.objects.count()
         self.authorized_client.post(
@@ -107,4 +106,4 @@ class PostFormTests(TestCase):
         self.assertEqual(edit.text, self.post.text)
         self.assertEqual(edit.author, self.post.author)
         self.assertEqual(self.group, edit.group)
-        self.assertEqual(form_data['image'], self.post.image)
+        self.assertTrue(form_data['image'])

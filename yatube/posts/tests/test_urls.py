@@ -82,6 +82,7 @@ class TaskURLTests(TestCase):
         """
         urls_name = (
             reverse('posts:new_post'),
+            reverse('posts:follow_index'),
             reverse('posts:post_edit', kwargs={'post_id': self.post.id}),
         )
         for adress in urls_name:
@@ -93,6 +94,7 @@ class TaskURLTests(TestCase):
         """без авторизации приватные URL недоступны"""
         url_names = (
             reverse('posts:new_post'),
+            reverse('posts:follow_index'),
             reverse('posts:post_edit', kwargs={'post_id': self.post.pk}),
             reverse('posts:post_delete', kwargs={'post_id': self.post.pk})
         )
@@ -126,6 +128,7 @@ class TaskURLTests(TestCase):
             reverse(
                 'posts:post_edit',
                 kwargs={'post_id': self.post.id}): 'posts/create_post.html',
+            reverse('posts:follow_index'): 'posts/follow.html',
         }
 
         for template, url in templates_url_names.items():

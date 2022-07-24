@@ -49,7 +49,7 @@ def profile(request, username):
     context = {
         'users': users,
         'page_obj': page_obj,
-        'following': following,
+        #'following': following,
         'follow_count': follow_count,
 
     }
