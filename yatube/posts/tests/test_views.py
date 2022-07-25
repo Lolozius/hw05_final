@@ -104,23 +104,15 @@ class PostTests(TestCase):
             reverse(
                 'posts:profile',
                 kwargs={'username': 'test_name1'}): 'posts/profile.html',
+            reverse('posts:follow_index'): 'posts/follow.html',
+            reverse(
+                'posts:post_delete',
+                kwargs={'post_id': self.post.pk}): 'posts/create_post.html',
         }
         for reverse_name, template in templates_page_names.items():
             with self.subTest(template=template):
                 response = self.authorized_client.get(reverse_name)
                 self.assertTemplateUsed(response, template)
-
-    def test_pages_template_delete(self):
-        templates_page_names = {
-            reverse(
-                'posts:post_delete',
-                kwargs={
-                    'post_id': self.post.id}): 'posts/create_post.html',
-        }
-        for template, reverse_name in templates_page_names.items():
-            with self.subTest(template=template):
-                response = self.authorized_client.get(template)
-                self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_index_pages_show_correct_context(self):
         """Шаблон index сформирован с правильным контекстом."""
@@ -174,7 +166,8 @@ class PostTests(TestCase):
         """Шаблон сформирован с правильным контекстом."""
         form_fields = {
             'text': forms.fields.CharField,
-            'group': forms.fields.ChoiceField
+            'group': forms.fields.ChoiceField,
+            'image': forms.fields.ImageField,
         }
         for value, expected in form_fields.items():
             with self.subTest(value=value):
@@ -309,9 +302,8 @@ class CacheTests(TestCase):
 
     def setUp(self):
         self.guest_client = Client()
-        self.user = User.objects.create_user(username='mob2556')
         self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
+        self.authorized_client.force_login(self.post.author)
 
     def test_cache_index(self):
         """Тест кэширования страницы index.html"""

@@ -107,9 +107,35 @@ class TaskURLTests(TestCase):
         """Страница /create/ перенаправит анонимного пользователя
         на страницу логина.
         """
-        response = self.guest_client.get(reverse('posts:new_post'))
-        url = urljoin(reverse('login'), '?next=/create/')
-        self.assertRedirects(response, url)
+        urls_name = (
+            reverse('posts:follow_index'),
+            reverse('posts:new_post'),
+            reverse(
+                'posts:post_edit',
+                kwargs={'post_id': self.post.pk}
+            ),
+            reverse(
+                'posts:post_delete',
+                kwargs={'post_id': self.post.pk}
+            ),
+            reverse(
+                'posts:add_comment',
+                kwargs={'post_id': self.post.pk}
+            ),
+            reverse(
+                'posts:profile_follow',
+                kwargs={'username': self.post.author}
+            ),
+            reverse(
+                'posts:profile_unfollow',
+                kwargs={'username': self.post.author}),
+
+        )
+        for addres in urls_name:
+            with self.subTest(addres=addres):
+                response = self.guest_client.get(addres)
+                url = urljoin(reverse('users:login'), '?next=' + addres)
+                self.assertRedirects(response, url)
 
     def test_urls_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
