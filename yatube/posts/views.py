@@ -33,21 +33,21 @@ def group_posts(request, slug):
 
 
 def profile(request, username):
-    users = get_object_or_404(User, username=username)
-    posts = users.posts.all()
+    user = get_object_or_404(User, username=username)
+    posts = user.posts.all()
     page_obj = func_paginator(request, posts)
     following = True
     follow_count: int = 0
     if request.user.is_authenticated:
-        following = users.follower.filter(
+        following = user.follower.filter(
             user=request.user,
             author__username=username).exists()
-        follow_count = users.follower.filter(
+        follow_count = user.follower.filter(
             user=request.user,
             author__username=username).count
 
     context = {
-        'users': users,
+        'users': user,
         'page_obj': page_obj,
         'following': following,
         'follow_count': follow_count,

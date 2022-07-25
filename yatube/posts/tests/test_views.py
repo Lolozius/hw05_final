@@ -362,13 +362,17 @@ class FollowTests(TestCase):
         """запись появляется в ленте подписчиков"""
         Follow.objects.create(user=self.user_follower,
                               author=self.user_following)
-        response = self.client_auth_follower.get('/follow/')
+        response = self.client_auth_follower.get(
+            reverse('posts:follow_index')
+        )
         post_text = response.context["page_obj"][OBJ_PAGE].text
         self.assertEqual(
             post_text,
             'Тестовая запись для тестирования ленты'
         )
-        response = self.client_auth_following.get('/follow/')
+        response = self.client_auth_following.get(
+            reverse('posts:follow_index')
+        )
         self.assertNotContains(
             response,
             'Тестовая запись для тестирования ленты'
